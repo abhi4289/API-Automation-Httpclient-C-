@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using System.Net;
 using System.Net.Http;
 using System.Text.Json;
 
@@ -6,36 +7,22 @@ namespace HttpClientDemo
 {
     public class Tests
     {
-        private HttpClient Client;
-        private readonly string getUserPath = "api/users?page=2";
-
-        [OneTimeSetUp]
-        public void Setup()
+        [TestCase("data2@api.com")]
+        public void Login(string email)
         {
-            HttpClient Client = new HttpClient
+            UserClient client = new UserClient();
+            client.GetApplicationSettings() ;
+
+            LoginRequest loginRequest = new LoginRequest
             {
-                BaseAddress = new System.Uri("https://reqres.in")
+                Email = "data2@api.com",
+                Password = "Welcome@12345"
             };
-        }
+            LoginResponse loginResponse = client.Login(loginRequest);
 
-        [Test]
-        public void Test1()
-        {
-            HttpResponseMessage responseMessage = Client.GetAsync(getUserPath)
-                .Result;
-            responseMessage.EnsureSuccessStatusCode();
-            GetUserResponse response = ReadAsAsync(responseMessage.Content);
+            Assert.That(loginResponse.AccessToken, Is.Not.Null);
+            Assert.That(loginResponse.Email, Is.EqualTo(email));
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(response.data.Count, Is.GreaterThan(0));
-                Assert.That(response.total, Is.EqualTo(2));
-            });
-        }
-
-        public GetUserResponse ReadAsAsync(HttpContent content)
-        {
-            return JsonSerializer.Deserialize<GetUserResponse>(content.ReadAsStringAsync().Result);
         }
     }
 }
